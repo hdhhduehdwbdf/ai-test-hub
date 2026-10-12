@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ai-test-hub
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: FLAGOS_API_KEY
+        sync: false
+      - key: MODEL
+        value: GLM-5.2

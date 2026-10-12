@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>登录 · AI 测测</title>
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
+  <script defer src="https://cdn.tailwindcss.com"></script>
+  <style>body { font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }</style>
+</head>
+<body class="min-h-full bg-[#f8f7f4] text-slate-800 antialiased">
+  <div class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-violet-200/40 blur-3xl"></div>
+    <div class="absolute right-0 top-1/4 h-80 w-80 rounded-full bg-sky-200/35 blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-amber-200/30 blur-3xl"></div>
+  </div>
+
+  <main class="flex min-h-screen items-center justify-center px-5 py-10">
+    <div class="w-full max-w-md">
+      <div class="mb-8 flex items-center justify-center gap-3">
+        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-sky-400 text-white shadow-lg shadow-slate-200/60">
+          <i data-lucide="sparkles" class="h-5 w-5"></i>
+        </div>
+        <span class="text-xl font-bold tracking-tight text-slate-900">AI 测测</span>
+      </div>
+
+      <div class="rounded-3xl bg-white/80 p-1 shadow-xl shadow-slate-200/60 ring-1 ring-slate-200 backdrop-blur">
+        <div class="rounded-3xl bg-white/90 p-7 sm:p-8">
+          <h1 id="title" class="text-2xl font-bold tracking-tight text-slate-900">欢迎回来</h1>
+          <p id="subtitle" class="mt-2 text-sm text-slate-500">用名字和密码进入你的测试空间</p>
+
+          <form id="authForm" autocomplete="off" class="mt-7 space-y-5">
+            <div>
+              <label class="mb-2 block text-sm font-medium text-slate-700" for="name">名字</label>
+              <input id="name" name="name" type="text" value="" autocomplete="off" spellcheck="false" placeholder="输入你的名字" class="w-full rounded-2xl border-0 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none ring-1 ring-slate-200 transition placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-300" />
+            </div>
+
+            <div id="genderBlock" class="hidden">
+              <label class="mb-2 block text-sm font-medium text-slate-700">性别</label>
+              <div id="genderGroup" class="grid grid-cols-3 gap-2">
+                <button type="button" data-gender="男" class="gender-btn rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-600 ring-1 ring-slate-200 transition hover:bg-white">男</button>
+                <button type="button" data-gender="女" class="gender-btn rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-600 ring-1 ring-slate-200 transition hover:bg-white">女</button>
+                <button type="button" data-gender="其他" class="gender-btn rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-600 ring-1 ring-slate-200 transition hover:bg-white">其他</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-medium text-slate-700" for="password">密码</label>
+              <input id="password" name="password" type="password" value="" autocomplete="new-password" placeholder="至少 4 位" class="w-full rounded-2xl border-0 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none ring-1 ring-slate-200 transition placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-300" />
+            </div>
+
+            <p id="error" class="hidden rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600 ring-1 ring-rose-100"></p>
+
+            <button id="submit" type="submit" class="w-full rounded-2xl bg-gradient-to-r from-indigo-500 to-sky-400 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200/60 transition hover:brightness-105 disabled:opacity-60">
+              进入
+            </button>
+          </form>
+
+          <button id="toggleMode" type="button" class="mt-5 w-full text-center text-sm text-slate-500 transition hover:text-slate-800">
+            第一次来？创建账号
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+    });
+
+    const form = document.getElementById('authForm');
+    const title = document.getElementById('title');
+    const subtitle = document.getElementById('subtitle');
+    const genderBlock = document.getElementById('genderBlock');
+    const genderButtons = document.querySelectorAll('.gender-btn');
+    const errorBox = document.getElementById('error');
+    const submit = document.getElementById('submit');
+    const toggleMode = document.getElementById('toggleMode');
+    const API_BASE = location.protocol === 'file:' ? 'http://localhost:3000' : '';
+
+    let mode = 'login';
+    let gender = '';
+
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.classList.remove('hidden');
+    }
+
+    function clearError() {
+      errorBox.textContent = '';
+      errorBox.classList.add('hidden');
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      clearError();
+      gender = '';
+      genderButtons.forEach((item) => {
+        item.className = 'gender-btn rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-600 ring-1 ring-slate-200 transition hover:bg-white';
+      });
+      const isRegister = mode === 'register';
+      title.textContent = isRegister ? '创建账号' : '欢迎回来';
+      subtitle.textContent = isRegister ? '先留下名字、性别和密码' : '用名字和密码进入你的测试空间';
+      genderBlock.classList.toggle('hidden', !isRegister);
+      submit.textContent = isRegister ? '创建并进入' : '进入';
+      toggleMode.textContent = isRegister ? '已经有账号？返回登录' : '第一次来？创建账号';
+      document.getElementById('password').autocomplete = 'new-password';
+    }
+
+    genderButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        gender = button.dataset.gender || '';
+        genderButtons.forEach((item) => {
+          item.className = 'gender-btn rounded-2xl px-3 py-3 text-sm transition ' + (item === button
+            ? 'bg-indigo-50 text-indigo-600 ring-2 ring-indigo-300'
+            : 'bg-slate-50 text-slate-600 ring-1 ring-slate-200 hover:bg-white');
+        });
+      });
+    });
+
+    toggleMode.addEventListener('click', () => setMode(mode === 'login' ? 'register' : 'login'));
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearError();
+      submit.disabled = true;
+
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        password: document.getElementById('password').value
+      };
+      if (mode === 'register') payload.gender = gender;
+
+      try {
+        const response = await fetch(API_BASE + (mode === 'register' ? '/api/auth/register' : '/api/auth/login'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!response.ok || data.error) {
+          showError(data.error || '操作失败，请重试');
+          return;
+        }
+        localStorage.setItem('ai_test_token', data.token);
+        localStorage.setItem('ai_test_user', JSON.stringify(data.user));
+        location.href = API_BASE + '/index.html';
+      } catch {
+        showError('网络连接失败，请确认后端已启动');
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    setMode('login');
+
+    setTimeout(() => {
+      document.getElementById('name').value = '';
+      document.getElementById('password').value = '';
+    }, 120);
+  </script>
+</body>
+</html>
+
